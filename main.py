@@ -1,9 +1,28 @@
 from fastapi import FastAPI
 from pydantic import BaseModel
-import joblib
 import numpy as np
+import joblib
+import os
 
 app = FastAPI()
+
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+SCALER_PATH = os.path.join(BASE_DIR, "scaler.joblib")
+MODEL_PATH = os.path.join(BASE_DIR, "kmeans.joblib")
+
+
+try:
+    scaler = joblib.load(SCALER_PATH)
+except Exception as e:
+    scaler = None
+    print("Scaler load error:", e)
+
+try:
+    model = joblib.load(MODEL_PATH)
+except Exception as e:
+    model = None
+    print("Model load error:", e)
 
 class InputData(BaseModel):
     carbohydrate: float
@@ -16,17 +35,20 @@ class InputData(BaseModel):
     calcium: float
     iron: float
 
-scaler = joblib.load("scaler.joblib")
-model = joblib.load("kmeans.joblib")
 
 @app.get("/")
 def root():
-    return {"message": "Hello world"}
+    return {"message": "server running"}
 
 @app.post("/predict")
 def predict(data: InputData):
     try:
-        arr = np.array([[  
+        if scaler is None:
+            return {"error": "Scaler not loaded"}
+        if model is None:
+            return {"error": "Model not loaded"}
+
+        arr = np.array([[
             data.carbohydrate,
             data.protein,
             data.fat,
