@@ -1,19 +1,17 @@
 from fastapi import FastAPI
 from pydantic import BaseModel
 import numpy as np
-import pickle
+import joblib
 
 app = FastAPI()
 
 # Load models
-scaler = pickle.load(open("scaler.pkl", "rb"))
-kmeans = pickle.load(open("kmeans.pkl", "rb"))
+scaler = joblib.load("scaler.joblib")
+kmeans = joblib.load("kmeans.joblib")
 
-# Input schema
 class NutritionInput(BaseModel):
-    features: dict   # {"탄수화물(g)": 12, ... }
+    features: dict
 
-# Predict endpoint
 @app.post("/predict")
 def predict_cluster(input_data: NutritionInput):
     ordered_keys = [
@@ -28,9 +26,7 @@ def predict_cluster(input_data: NutritionInput):
         "철(mg)"
     ]
 
-    # Convert to vector
     x = np.array([[input_data.features[k] for k in ordered_keys]])
     x_scaled = scaler.transform(x)
     cluster = int(kmeans.predict(x_scaled)[0])
-
     return {"cluster": cluster}
