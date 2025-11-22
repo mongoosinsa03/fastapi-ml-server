@@ -4,7 +4,7 @@ import joblib
 import numpy as np
 
 # --------------------------
-# Input Mode
+# Input Model
 # --------------------------
 class InputData(BaseModel):
     carbohydrate: float
