@@ -5,10 +5,6 @@ import joblib
 
 app = FastAPI()
 
-# 모델 로드
-scaler = joblib.load("scaler.joblib")
-model = joblib.load("kmeans.joblib")
-
 class InputData(BaseModel):
     carbohydrate: float
     protein: float
@@ -20,13 +16,20 @@ class InputData(BaseModel):
     calcium: float
     iron: float
 
+class PredictResponse(BaseModel):
+    cluster: int
+
+# 모델 로드
+scaler = joblib.load("scaler.joblib")
+model = joblib.load("kmeans.joblib")
+
 
 @app.get("/")
 def root():
-    return {"message": "Hello World"}   # ← 반드시 dict로 반환해야 함!
+    return {"message": "Hello world"}
 
 
-@app.post("/predict")
+@app.post("/predict", response_model=PredictResponse)   # ← 중요!
 def predict(data: InputData):
     try:
         arr = np.array([[
@@ -38,13 +41,13 @@ def predict(data: InputData):
             data.riboflavin,
             data.vitamin_c,
             data.calcium,
-            data.iron
+            data.iron,
         ]])
 
         scaled = scaler.transform(arr)
-        pred = int(model.predict(scaled)[0])
+        pred = model.predict(scaled)[0]
 
-        return {"cluster": pred}
+        return {"cluster": int(pred)}
 
     except Exception as e:
-        return {"error": str(e)}
+        return {"cluster": -1}
