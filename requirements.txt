@@ -1,6 +1,5 @@
 fastapi
 uvicorn
-numpy
-scikit-learn
+numpy==2.0.2
+scikit-learn==1.6.1
 pydantic
-scikit-learn==1.2.2
