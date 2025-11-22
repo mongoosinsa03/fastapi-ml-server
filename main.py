@@ -2,27 +2,12 @@ from fastapi import FastAPI
 from pydantic import BaseModel
 import numpy as np
 import joblib
-import os
 
 app = FastAPI()
 
-
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-SCALER_PATH = os.path.join(BASE_DIR, "scaler.joblib")
-MODEL_PATH = os.path.join(BASE_DIR, "kmeans.joblib")
-
-
-try:
-    scaler = joblib.load(SCALER_PATH)
-except Exception as e:
-    scaler = None
-    print("Scaler load error:", e)
-
-try:
-    model = joblib.load(MODEL_PATH)
-except Exception as e:
-    model = None
-    print("Model load error:", e)
+# 모델 로드
+scaler = joblib.load("scaler.joblib")
+model = joblib.load("kmeans.joblib")
 
 class InputData(BaseModel):
     carbohydrate: float
@@ -38,16 +23,12 @@ class InputData(BaseModel):
 
 @app.get("/")
 def root():
-    return {"message": "server running"}
+    return {"message": "Hello World"}   # ← 반드시 dict로 반환해야 함!
+
 
 @app.post("/predict")
 def predict(data: InputData):
     try:
-        if scaler is None:
-            return {"error": "Scaler not loaded"}
-        if model is None:
-            return {"error": "Model not loaded"}
-
         arr = np.array([[
             data.carbohydrate,
             data.protein,
@@ -61,9 +42,9 @@ def predict(data: InputData):
         ]])
 
         scaled = scaler.transform(arr)
-        pred = model.predict(scaled)[0]
+        pred = int(model.predict(scaled)[0])
 
-        return {"cluster": int(pred)}
+        return {"cluster": pred}
 
     except Exception as e:
         return {"error": str(e)}
